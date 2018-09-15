@@ -120,7 +120,7 @@ class SignInView(BaseView):
         recover_access_view = self.i_have_account_button.click()
         recover_access_view.passphrase_input.click()
         recover_access_view.send_as_keyevent(passphrase)
-        recover_access_view.password_input.click()
+        recover_access_view.passwosrd_input.click()
         recover_access_view.send_as_keyevent(password)
         recover_access_view.sign_in_button.click()
         return self.get_home_view()
