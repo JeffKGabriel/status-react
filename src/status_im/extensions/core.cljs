@@ -250,12 +250,12 @@
   [{:keys [db]} input-key value]
   {:db (update db :extensions/manage assoc input-key {:value value})})
 
-(fx/defn fetch [cofx name]
-  (get-in cofx [:db :account/account :extensions name]))
+(fx/defn fetch [cofx id]
+  (get-in cofx [:db :account/account :extensions id]))
 
 (fx/defn edit
-  [cofx name]
-  (let [{:keys [url]} (fetch cofx name)]
+  [cofx id]
+  (let [{:keys [url]} (fetch cofx id)]
     (fx/merge (set-input cofx :url (str url))
               (navigation/navigate-to-cofx :edit-extension nil))))
 
@@ -274,12 +274,14 @@
   (let [extension-key  (get-in extension-data ['meta :name])
         {:keys [url id]} manage
         extension      {:id      (-> (:value id)
-                                     (or (random-id-generator))
-                                     (string/replace "-" ""))
+                                     (or "extension")
+                                     ;; TODO: It's a temporary fix for hackathon — we need to have only one extension installed
+                                     #_(or (random-id-generator))
+                                     #_(string/replace "-" ""))
                         :name    (str extension-key)
                         :url     (:value url)
                         :active? true}
-        new-extensions (assoc (:extensions account) (:name extension) extension)]
+        new-extensions (assoc (:extensions account) (:id extension) extension)]
     (fx/merge cofx
               {:ui/show-confirmation {:title     (i18n/label :t/success)
                                       :content   (i18n/label :t/extension-installed)
@@ -289,15 +291,16 @@
               (add extension-data true))))
 
 (fx/defn toggle-activation
-  [cofx name state]
+  [cofx id state]
   (let [toggle-fn      (get {true  registry/activate
                              false registry/deactivate}
                             state)
         extensions     (get-in cofx [:db :account/account :extensions])
-        new-extensions (assoc-in extensions [name :active?] state)]
+        new-extensions (assoc-in extensions [id :active?] state)
+        extension-key  (get-in extensions [id :name])]
     (fx/merge cofx
               (accounts.update/account-update {:extensions new-extensions} {:success-event nil})
-              #(toggle-fn name %))))
+              #(toggle-fn extension-key %))))
 
 (fx/defn load
   [cofx url]
